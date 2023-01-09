@@ -107,13 +107,29 @@ open class AmountInputField: UIStackView {
         }
     }
 
+    public var text: String? = nil {
+        didSet {
+            if let text = text {
+                manipulateInput(text)
+                if let text = inputTextField.text, text.count > 0 {
+                    topPlaceholderLabel.alpha = 1
+                    centerPlaceholderLabel.alpha = 0
+                    topConstant = 26
+                    bottomConstant = 8
+                } else {
+                    delegate?.amountInputFieldDidChange(self, value: nil)
+                }
+            }
+        }
+    }
+
     private var isActive: Bool = false {
         didSet {
             if isActive {
                 layer.cornerRadius = cornerRadius
                 layer.borderWidth = activeBorderWidth
                 layer.borderColor = activeBorderColor.cgColor
-                if let text = inputTextField.text, text.isEmpty {
+                if let text = inputTextField.text, text.count == 0 {
                     topPlaceholderLabel.alpha = 1
                     centerPlaceholderLabel.alpha = 0
                 }
@@ -123,7 +139,7 @@ open class AmountInputField: UIStackView {
                 layer.cornerRadius = cornerRadius
                 layer.borderWidth = normalBorderWidth
                 layer.borderColor = normalBorderColor.cgColor
-                if let text = inputTextField.text, text.isEmpty {
+                if let text = inputTextField.text, text.count == 0 {
                     topPlaceholderLabel.alpha = 0
                     centerPlaceholderLabel.alpha = 1
                     topConstant = 16
@@ -178,8 +194,8 @@ open class AmountInputField: UIStackView {
         alignment = .fill
         distribution = .fill
         isLayoutMarginsRelativeArrangement = true
-        clipsToBounds = true
         if #available(iOS 11.0, *) { directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12) }
+        clipsToBounds = true
         backgroundColor = inputBackgroundColor
 
         contentView = UIView()
@@ -279,45 +295,39 @@ extension AmountInputField: UITextFieldDelegate {
             return false
         }
 
-        if string == Locale.current.decimalSeparator {
-            return manipulateInputText(text.replacingCharacters(in: range, with: inputFormatter.decimalSeparator))
-        }
+        manipulateInput(text.replacingCharacters(in: range, with: string == Locale.current.decimalSeparator ? inputFormatter.decimalSeparator : string))
 
-        return manipulateInputText(text.replacingCharacters(in: range, with: string))
+        return false
     }
 
-    private func manipulateInputText(_ text: String) -> Bool {
-
+    private func manipulateInput(_ text: String) {
         if text.count > 0 {
-            if let regex = try? NSRegularExpression(pattern: "^(?!0[0-9])[0-9,]+.?[0-9]{0,2}$", options: []) {
-                let matches = regex.numberOfMatches(in: text, options: [], range: NSRange(location: 0, length: text.unicodeScalars.count))
-                if matches > 0 {
-                    let localText = text.replacingOccurrences(of: inputFormatter.groupingSeparator, with: "")
-                    if localText.contains(inputFormatter.decimalSeparator) {
-                        var integers = localText.components(separatedBy: inputFormatter.decimalSeparator)
-                        if integers.count > 0 {
-                            if integers[0].count < (limitIntegerDigits + 1) {
-                                if let integerNumber = inputFormatter.number(from: integers[0]) {
-                                    if let integerTextNumber = inputFormatter.string(from: integerNumber) {
-                                        integers[0] = integerTextNumber
-                                        let inputTextNumber = integers.joined(separator: inputFormatter.decimalSeparator)
-                                        if let inputNumber = inputFormatter.number(from: inputTextNumber) {
-                                            inputTextField.text = inputTextNumber
-                                            delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
-                                            endingCursor()
-                                        }
+            if validateInput(text: text) {
+                let localText = text.replacingOccurrences(of: inputFormatter.groupingSeparator, with: "")
+                if localText.contains(inputFormatter.decimalSeparator) {
+                    var integers = localText.components(separatedBy: inputFormatter.decimalSeparator)
+                    if integers.count > 0 {
+                        if integers[0].count < (limitIntegerDigits + 1) {
+                            if let integerNumber = inputFormatter.number(from: integers[0]) {
+                                if let integerTextNumber = inputFormatter.string(from: integerNumber) {
+                                    integers[0] = integerTextNumber
+                                    let inputTextNumber = integers.joined(separator: inputFormatter.decimalSeparator)
+                                    if let inputNumber = inputFormatter.number(from: inputTextNumber) {
+                                        inputTextField.text = inputTextNumber
+                                        delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
+                                        endingCursor()
                                     }
                                 }
                             }
                         }
-                    } else {
-                        if localText.count < (limitIntegerDigits + 1) {
-                            if let inputNumber = inputFormatter.number(from: localText) {
-                                if let inputTextNumber = inputFormatter.string(from: inputNumber) {
-                                    inputTextField.text = inputTextNumber
-                                    delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
-                                    endingCursor()
-                                }
+                    }
+                } else {
+                    if localText.count < (limitIntegerDigits + 1) {
+                        if let inputNumber = inputFormatter.number(from: localText) {
+                            if let inputTextNumber = inputFormatter.string(from: inputNumber) {
+                                inputTextField.text = inputTextNumber
+                                delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
+                                endingCursor()
                             }
                         }
                     }
@@ -328,10 +338,65 @@ extension AmountInputField: UITextFieldDelegate {
             delegate?.amountInputFieldDidChange(self, value: nil)
             endingCursor()
         }
+    }
+
+    private func validateInput(text: String) -> Bool {
+        if let regex = try? NSRegularExpression(pattern: "^(?!0[0-9])[0-9,]+.?[0-9]{0,2}$", options: []) {
+            let matches = regex.numberOfMatches(in: text, options: [], range: NSRange(location: 0, length: text.unicodeScalars.count))
+            return matches > 0
+        }
         return false
     }
 
     private func endingCursor() {
         DispatchQueue.main.async { self.inputTextField.selectedTextRange = self.inputTextField.textRange(from: self.inputTextField.endOfDocument, to: self.inputTextField.endOfDocument) }
     }
+
+    /*
+     private func manipulateInputText(_ text: String) -> Bool {
+
+     if text.count > 0 {
+     if let regex = try? NSRegularExpression(pattern: "^(?!0[0-9])[0-9,]+.?[0-9]{0,2}$", options: []) {
+     let matches = regex.numberOfMatches(in: text, options: [], range: NSRange(location: 0, length: text.unicodeScalars.count))
+     if matches > 0 {
+     let localText = text.replacingOccurrences(of: inputFormatter.groupingSeparator, with: "")
+     if localText.contains(inputFormatter.decimalSeparator) {
+     var integers = localText.components(separatedBy: inputFormatter.decimalSeparator)
+     if integers.count > 0 {
+     if integers[0].count < (limitIntegerDigits + 1) {
+     if let integerNumber = inputFormatter.number(from: integers[0]) {
+     if let integerTextNumber = inputFormatter.string(from: integerNumber) {
+     integers[0] = integerTextNumber
+     let inputTextNumber = integers.joined(separator: inputFormatter.decimalSeparator)
+     if let inputNumber = inputFormatter.number(from: inputTextNumber) {
+     inputTextField.text = inputTextNumber
+     delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
+     endingCursor()
+     }
+     }
+     }
+     }
+     }
+     } else {
+     if localText.count < (limitIntegerDigits + 1) {
+     if let inputNumber = inputFormatter.number(from: localText) {
+     if let inputTextNumber = inputFormatter.string(from: inputNumber) {
+     inputTextField.text = inputTextNumber
+     delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
+     endingCursor()
+     }
+     }
+     }
+     }
+     }
+     }
+     } else {
+     inputTextField.text = nil
+     delegate?.amountInputFieldDidChange(self, value: nil)
+     endingCursor()
+     }
+     return false
+     }
+     */
 }
+
