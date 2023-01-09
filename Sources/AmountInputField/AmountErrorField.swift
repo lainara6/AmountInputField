@@ -21,6 +21,12 @@ open class AmountErrorField: UIStackView {
         }
     }
 
+    public var errorImage: UIImage! = nil {
+        didSet {
+            errorImageView.image = errorImage
+        }
+    }
+
     public var errorMessage: String! = nil {
         didSet {
             isHidden = errorMessage == nil
@@ -58,9 +64,11 @@ open class AmountErrorField: UIStackView {
         spacing = 4
         addArrangedSubview(errorImageView)
         addArrangedSubview(errorLabel)
-        errorImageView.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        errorImageView.setContentHuggingPriority(.defaultHigh, for: .vertical)
-        errorLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        errorLabel.setContentHuggingPriority(.defaultLow, for: .vertical)
+        
+        errorImageView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            errorImageView.widthAnchor.constraint(equalToConstant: 16),
+            errorImageView.heightAnchor.constraint(equalToConstant: 16)
+        ])
     }
 }
