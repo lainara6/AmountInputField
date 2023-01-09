@@ -64,11 +64,7 @@ open class AmountErrorField: UIStackView {
         spacing = 4
         addArrangedSubview(errorImageView)
         addArrangedSubview(errorLabel)
-        
-        errorImageView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            errorImageView.widthAnchor.constraint(equalToConstant: 16),
-            errorImageView.heightAnchor.constraint(equalToConstant: 16)
-        ])
+        errorImageView.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        errorImageView.setContentHuggingPriority(.defaultHigh, for: .vertical)
     }
 }
