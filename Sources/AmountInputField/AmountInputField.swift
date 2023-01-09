@@ -214,7 +214,7 @@ open class AmountInputField: UIStackView {
         alignment = .fill
         distribution = .fill
         isLayoutMarginsRelativeArrangement = true
-        directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
+        if #available(iOS 11.0, *) { directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12) }
         clipsToBounds = true
         backgroundColor = inputBackgroundColor
 

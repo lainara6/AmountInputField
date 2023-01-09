@@ -7,7 +7,7 @@
 
 import UIKit
 
-class AmountErrorField: UIStackView {
+open class AmountErrorField: UIStackView {
 
     public var font: UIFont! = nil {
         didSet {
@@ -41,7 +41,7 @@ class AmountErrorField: UIStackView {
         return label
     }()
 
-    required init(coder: NSCoder) {
+    required public init(coder: NSCoder) {
         super.init(coder: coder)
         commitUI()
     }
