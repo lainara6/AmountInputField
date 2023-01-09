@@ -11,6 +11,12 @@ open class AmountInputField: UIStackView {
 
     public var delegate: AmountInputFieldDelegate?
 
+    public var requiredColor: UIColor = .red
+
+    public var errorBorderColor: UIColor = .red
+
+    public var errorBorderWidth: CGFloat = 1.0
+
     public var normalBorderColor: UIColor = UIColor(red: 194/255.0, green: 194/255.0, blue: 194/255.0, alpha: 1.0) {
         didSet {
             isActive = isActive ? true : false
@@ -80,14 +86,12 @@ open class AmountInputField: UIStackView {
         }
     }
 
-    public var requiredFieldColor: UIColor = .red
-
     public var isRequired: Bool = false {
         didSet {
             if isRequired {
                 let topFont = UIFont(name: placeholderFont.familyName, size: placeholderFont.pointSize - 2) ?? UIFont.systemFont(ofSize: placeholderFont.pointSize - 2)
                 let topAttributesText: [NSAttributedString.Key: Any] = [.font: topFont, .foregroundColor: placeholderColor]
-                let topAttributesAsterisk: [NSAttributedString.Key: Any] = [.font: topFont, .foregroundColor: requiredFieldColor]
+                let topAttributesAsterisk: [NSAttributedString.Key: Any] = [.font: topFont, .foregroundColor: requiredColor]
                 let topAttributedText = NSAttributedString(string: placeholderText, attributes: topAttributesText)
                 let topAttributedAsterisk = NSAttributedString(string: " *", attributes: topAttributesAsterisk)
                 let topAttributedFullText = NSMutableAttributedString()
@@ -96,7 +100,7 @@ open class AmountInputField: UIStackView {
                 topPlaceholderLabel.attributedText = topAttributedFullText
 
                 let centerAttributesText: [NSAttributedString.Key: Any] = [.font: placeholderFont, .foregroundColor: placeholderColor]
-                let centerAttributesAsterisk: [NSAttributedString.Key: Any] = [.font: placeholderFont, .foregroundColor: requiredFieldColor]
+                let centerAttributesAsterisk: [NSAttributedString.Key: Any] = [.font: placeholderFont, .foregroundColor: requiredColor]
                 let centerAttributedText = NSAttributedString(string: placeholderText, attributes: centerAttributesText)
                 let centerAttributedAsterisk = NSAttributedString(string: " *", attributes: centerAttributesAsterisk)
                 let centerAttributedFullText = NSMutableAttributedString()
@@ -123,12 +127,28 @@ open class AmountInputField: UIStackView {
         }
     }
 
+    public func becomeError(errorMessage: String?) {
+        isError = true
+        delegate?.amountInputFieldDidBecomeError(self, errorMessage: errorMessage)
+    }
+
+    public func resignError() {
+        isError = false
+        delegate?.amountInputFieldDidResignError(self)
+    }
+
+    private var isError: Bool! = false {
+        didSet {
+            isActive = isActive ? true : false
+        }
+    }
+
     private var isActive: Bool = false {
         didSet {
             if isActive {
                 layer.cornerRadius = cornerRadius
-                layer.borderWidth = activeBorderWidth
-                layer.borderColor = activeBorderColor.cgColor
+                layer.borderWidth = isError ? errorBorderWidth : activeBorderWidth
+                layer.borderColor = isError ? errorBorderColor.cgColor : activeBorderColor.cgColor
                 if let text = inputTextField.text, text.count == 0 {
                     topPlaceholderLabel.alpha = 1
                     centerPlaceholderLabel.alpha = 0
@@ -137,8 +157,8 @@ open class AmountInputField: UIStackView {
                 bottomConstant = 8
             } else {
                 layer.cornerRadius = cornerRadius
-                layer.borderWidth = normalBorderWidth
-                layer.borderColor = normalBorderColor.cgColor
+                layer.borderWidth = isError ? errorBorderWidth : normalBorderWidth
+                layer.borderColor = isError ? errorBorderColor.cgColor : normalBorderColor.cgColor
                 if let text = inputTextField.text, text.count == 0 {
                     topPlaceholderLabel.alpha = 0
                     centerPlaceholderLabel.alpha = 1
@@ -166,9 +186,9 @@ open class AmountInputField: UIStackView {
 
     private var limitIntegerDigits: Int = 17
     private var contentView: UIView!
+    private var inputTextField: UITextField!
     private var stackView: UIStackView!
     private var topPlaceholderLabel: UILabel!
-    private var inputTextField: UITextField!
     private var centerPlaceholderLabel: UILabel!
     private var topConstraint: NSLayoutConstraint!
     private var bottomConstraint: NSLayoutConstraint!
@@ -194,7 +214,7 @@ open class AmountInputField: UIStackView {
         alignment = .fill
         distribution = .fill
         isLayoutMarginsRelativeArrangement = true
-        if #available(iOS 11.0, *) { directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12) }
+        directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: 12, bottom: 0, trailing: 12)
         clipsToBounds = true
         backgroundColor = inputBackgroundColor
 
@@ -316,6 +336,7 @@ extension AmountInputField: UITextFieldDelegate {
                                         inputTextField.text = inputTextNumber
                                         delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
                                         endingCursor()
+                                        resignError()
                                     }
                                 }
                             }
@@ -328,6 +349,7 @@ extension AmountInputField: UITextFieldDelegate {
                                 inputTextField.text = inputTextNumber
                                 delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
                                 endingCursor()
+                                resignError()
                             }
                         }
                     }
@@ -337,6 +359,7 @@ extension AmountInputField: UITextFieldDelegate {
             inputTextField.text = nil
             delegate?.amountInputFieldDidChange(self, value: nil)
             endingCursor()
+            resignError()
         }
     }
 
@@ -351,52 +374,4 @@ extension AmountInputField: UITextFieldDelegate {
     private func endingCursor() {
         DispatchQueue.main.async { self.inputTextField.selectedTextRange = self.inputTextField.textRange(from: self.inputTextField.endOfDocument, to: self.inputTextField.endOfDocument) }
     }
-
-    /*
-     private func manipulateInputText(_ text: String) -> Bool {
-
-     if text.count > 0 {
-     if let regex = try? NSRegularExpression(pattern: "^(?!0[0-9])[0-9,]+.?[0-9]{0,2}$", options: []) {
-     let matches = regex.numberOfMatches(in: text, options: [], range: NSRange(location: 0, length: text.unicodeScalars.count))
-     if matches > 0 {
-     let localText = text.replacingOccurrences(of: inputFormatter.groupingSeparator, with: "")
-     if localText.contains(inputFormatter.decimalSeparator) {
-     var integers = localText.components(separatedBy: inputFormatter.decimalSeparator)
-     if integers.count > 0 {
-     if integers[0].count < (limitIntegerDigits + 1) {
-     if let integerNumber = inputFormatter.number(from: integers[0]) {
-     if let integerTextNumber = inputFormatter.string(from: integerNumber) {
-     integers[0] = integerTextNumber
-     let inputTextNumber = integers.joined(separator: inputFormatter.decimalSeparator)
-     if let inputNumber = inputFormatter.number(from: inputTextNumber) {
-     inputTextField.text = inputTextNumber
-     delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
-     endingCursor()
-     }
-     }
-     }
-     }
-     }
-     } else {
-     if localText.count < (limitIntegerDigits + 1) {
-     if let inputNumber = inputFormatter.number(from: localText) {
-     if let inputTextNumber = inputFormatter.string(from: inputNumber) {
-     inputTextField.text = inputTextNumber
-     delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
-     endingCursor()
-     }
-     }
-     }
-     }
-     }
-     }
-     } else {
-     inputTextField.text = nil
-     delegate?.amountInputFieldDidChange(self, value: nil)
-     endingCursor()
-     }
-     return false
-     }
-     */
 }
-

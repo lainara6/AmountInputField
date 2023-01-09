@@ -8,6 +8,8 @@
 import Foundation
 
 public protocol AmountInputFieldDelegate: AnyObject {
+    func amountInputFieldDidBecomeError(_ amountInputField: AmountInputField, errorMessage: String?)
+    func amountInputFieldDidResignError(_ amountInputField: AmountInputField)
     func amountInputFieldDidBeginEditing(_ amountInputField: AmountInputField)
     func amountInputFieldDidEndEditing(_ amountInputField: AmountInputField)
     func amountInputFieldDidChange(_ amountInputField: AmountInputField, value: Double?)
