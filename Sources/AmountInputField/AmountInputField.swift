@@ -205,7 +205,7 @@ open class AmountInputField: UIStackView {
     }
 
     private var limitIntegerDigits: Int = 17
-    private var centerContentView: UIView!
+    private var contentView: UIView!
     private var rightContentView: UIStackView!
     private var inputTextField: UITextField!
     private var stackView: UIStackView!
@@ -231,7 +231,7 @@ open class AmountInputField: UIStackView {
     }
 
     private func commitUI() {
-        spacing = 2.0
+        spacing = 2
         axis = .horizontal
         alignment = .fill
         distribution = .fill
@@ -240,12 +240,12 @@ open class AmountInputField: UIStackView {
         clipsToBounds = true
         backgroundColor = inputBackgroundColor
 
-        centerContentView = UIView()
-        centerContentView.setContentHuggingPriority(.defaultHigh, for: .vertical)
-        centerContentView.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        centerContentView.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        centerContentView.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        addArrangedSubview(centerContentView)
+        contentView = UIView()
+        contentView.layer.borderWidth = 1
+        contentView.layer.borderColor = UIColor.green.cgColor
+        contentView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        contentView.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        addArrangedSubview(contentView)
 
         inputTextField = UITextField()
         inputTextField.autocapitalizationType = .none
@@ -260,15 +260,15 @@ open class AmountInputField: UIStackView {
         inputTextField.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         inputTextField.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
         inputTextField.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        centerContentView.addSubview(inputTextField)
+        contentView.addSubview(inputTextField)
 
-        topConstraint = inputTextField.topAnchor.constraint(equalTo: centerContentView.topAnchor)
-        bottomConstraint = inputTextField.bottomAnchor.constraint(equalTo: centerContentView.bottomAnchor)
+        topConstraint = inputTextField.topAnchor.constraint(equalTo: contentView.topAnchor)
+        bottomConstraint = inputTextField.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         NSLayoutConstraint.activate([
             topConstraint,
             bottomConstraint,
-            inputTextField.rightAnchor.constraint(equalTo: centerContentView.rightAnchor),
-            inputTextField.leftAnchor.constraint(equalTo: centerContentView.leftAnchor),
+            inputTextField.rightAnchor.constraint(equalTo: contentView.rightAnchor),
+            inputTextField.leftAnchor.constraint(equalTo: contentView.leftAnchor),
         ])
 
         centerPlaceholderLabel = UILabel()
@@ -291,12 +291,12 @@ open class AmountInputField: UIStackView {
         stackView.axis = .horizontal
         stackView.alignment = .fill
         stackView.distribution = .fillEqually
-        centerContentView.addSubview(stackView)
+        contentView.addSubview(stackView)
 
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: centerContentView.topAnchor, constant: 8),
-            stackView.leftAnchor.constraint(equalTo: centerContentView.leftAnchor),
-            stackView.rightAnchor.constraint(equalTo: centerContentView.rightAnchor),
+            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            stackView.leftAnchor.constraint(equalTo: contentView.leftAnchor),
+            stackView.rightAnchor.constraint(equalTo: contentView.rightAnchor),
             stackView.heightAnchor.constraint(equalToConstant: 16)
         ])
 
@@ -308,16 +308,18 @@ open class AmountInputField: UIStackView {
         stackView.addArrangedSubview(topPlaceholderLabel)
 
         rightContentView = UIStackView()
-        rightContentView.translatesAutoresizingMaskIntoConstraints = false
         rightContentView.isHidden = true
+        rightContentView.translatesAutoresizingMaskIntoConstraints = false
         rightContentView.axis = .vertical
         rightContentView.alignment = .trailing
         rightContentView.distribution = .fill
+        rightContentView.layer.borderWidth = 1
+        rightContentView.layer.borderColor = UIColor.red.cgColor
         addArrangedSubview(rightContentView)
 
         NSLayoutConstraint.activate([
-            rightContentView.heightAnchor.constraint(equalTo: centerContentView.heightAnchor),
-            rightContentView.widthAnchor.constraint(equalTo: centerContentView.heightAnchor, multiplier: 1.0)
+            rightContentView.heightAnchor.constraint(equalTo: contentView.heightAnchor),
+            rightContentView.widthAnchor.constraint(equalTo: contentView.heightAnchor, multiplier: 1)
         ])
 
         isActive = false
@@ -362,7 +364,16 @@ extension AmountInputField: UITextFieldDelegate {
                 if localText.contains(inputFormatter.decimalSeparator) {
                     var integers = localText.components(separatedBy: inputFormatter.decimalSeparator)
                     if integers.count > 0 {
-                        if integers[0].count < (limitIntegerDigits + 1) {
+                        if integers[0].count == 0 {
+                            integers[0] = "0"
+                            let inputTextNumber = integers.joined(separator: inputFormatter.decimalSeparator)
+                            if let inputNumber = inputFormatter.number(from: inputTextNumber) {
+                                inputTextField.text = inputTextNumber
+                                delegate?.amountInputFieldDidChange(self, text: inputTextNumber, value: inputNumber.doubleValue)
+                                endingCursor()
+                                resignError()
+                            }
+                        } else if integers[0].count < (limitIntegerDigits + 1) {
                             if let integerNumber = inputFormatter.number(from: integers[0]) {
                                 if let integerTextNumber = inputFormatter.string(from: integerNumber) {
                                     integers[0] = integerTextNumber
@@ -399,14 +410,17 @@ extension AmountInputField: UITextFieldDelegate {
     }
 
     private func validateInput(text: String) -> Bool {
-        if let regex = try? NSRegularExpression(pattern: "^(?!0[0-9])[0-9,]+.?[0-9]{0,2}$", options: []) {
+        do {
+            let regex = try NSRegularExpression(pattern: "^0*[0-9]*[0-9,]*.?[0-9]{0,2}$", options: [])
             let matches = regex.numberOfMatches(in: text, options: [], range: NSRange(location: 0, length: text.unicodeScalars.count))
             return matches > 0
+        } catch {
+            return false
         }
-        return false
     }
 
     private func endingCursor() {
         DispatchQueue.main.async { self.inputTextField.selectedTextRange = self.inputTextField.textRange(from: self.inputTextField.endOfDocument, to: self.inputTextField.endOfDocument) }
     }
 }
+
