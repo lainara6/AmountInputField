@@ -121,7 +121,7 @@ open class AmountInputField: UIStackView {
                     topConstant = 26
                     bottomConstant = 8
                 } else {
-                    delegate?.amountInputFieldDidChange(self, value: nil)
+                    delegate?.amountInputFieldDidChange(self, text: nil, value: nil)
                 }
             }
         }
@@ -369,7 +369,7 @@ extension AmountInputField: UITextFieldDelegate {
                                     let inputTextNumber = integers.joined(separator: inputFormatter.decimalSeparator)
                                     if let inputNumber = inputFormatter.number(from: inputTextNumber) {
                                         inputTextField.text = inputTextNumber
-                                        delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
+                                        delegate?.amountInputFieldDidChange(self, text: inputTextNumber, value: inputNumber.doubleValue)
                                         endingCursor()
                                         resignError()
                                     }
@@ -382,7 +382,7 @@ extension AmountInputField: UITextFieldDelegate {
                         if let inputNumber = inputFormatter.number(from: localText) {
                             if let inputTextNumber = inputFormatter.string(from: inputNumber) {
                                 inputTextField.text = inputTextNumber
-                                delegate?.amountInputFieldDidChange(self, value: inputNumber.doubleValue)
+                                delegate?.amountInputFieldDidChange(self, text: inputTextNumber, value: inputNumber.doubleValue)
                                 endingCursor()
                                 resignError()
                             }
@@ -392,7 +392,7 @@ extension AmountInputField: UITextFieldDelegate {
             }
         } else {
             inputTextField.text = nil
-            delegate?.amountInputFieldDidChange(self, value: nil)
+            delegate?.amountInputFieldDidChange(self, text: nil, value: nil)
             endingCursor()
             resignError()
         }

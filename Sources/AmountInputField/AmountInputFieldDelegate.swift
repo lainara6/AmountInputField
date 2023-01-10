@@ -12,5 +12,5 @@ public protocol AmountInputFieldDelegate: AnyObject {
     func amountInputFieldDidResignError(_ amountInputField: AmountInputField)
     func amountInputFieldDidBeginEditing(_ amountInputField: AmountInputField)
     func amountInputFieldDidEndEditing(_ amountInputField: AmountInputField)
-    func amountInputFieldDidChange(_ amountInputField: AmountInputField, value: Double?)
+    func amountInputFieldDidChange(_ amountInputField: AmountInputField, text: String?, value: Double?)
 }
