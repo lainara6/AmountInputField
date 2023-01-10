@@ -127,6 +127,14 @@ open class AmountInputField: UIStackView {
         }
     }
 
+    public func becomeFocusing() {
+        inputTextField.becomeFirstResponder()
+    }
+
+    public func resignFocusing() {
+        inputTextField.resignFirstResponder()
+    }
+
     public func becomeError(errorMessage: String?) {
         isError = true
         delegate?.amountInputFieldDidBecomeError(self, errorMessage: errorMessage)
