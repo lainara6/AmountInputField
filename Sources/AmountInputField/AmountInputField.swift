@@ -127,6 +127,18 @@ open class AmountInputField: UIStackView {
         }
     }
 
+    public var rightView: UIView? = nil {
+        didSet {
+            if let rightView = rightView {
+                rightContentView.isHidden = false
+                rightContentView.addArrangedSubview(rightView)
+            } else {
+                rightContentView.isHidden = true
+                rightContentView.arrangedSubviews.forEach { rightContentView.removeArrangedSubview($0) }
+            }
+        }
+    }
+
     public func becomeFocusing() {
         inputTextField.becomeFirstResponder()
     }
@@ -193,7 +205,8 @@ open class AmountInputField: UIStackView {
     }
 
     private var limitIntegerDigits: Int = 17
-    private var contentView: UIView!
+    private var centerContentView: UIView!
+    private var rightContentView: UIStackView!
     private var inputTextField: UITextField!
     private var stackView: UIStackView!
     private var topPlaceholderLabel: UILabel!
@@ -218,7 +231,8 @@ open class AmountInputField: UIStackView {
     }
 
     private func commitUI() {
-        axis = .vertical
+        spacing = 2.0
+        axis = .horizontal
         alignment = .fill
         distribution = .fill
         isLayoutMarginsRelativeArrangement = true
@@ -226,12 +240,12 @@ open class AmountInputField: UIStackView {
         clipsToBounds = true
         backgroundColor = inputBackgroundColor
 
-        contentView = UIView()
-        contentView.setContentHuggingPriority(.defaultHigh, for: .vertical)
-        contentView.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        contentView.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        contentView.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        addArrangedSubview(contentView)
+        centerContentView = UIView()
+        centerContentView.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        centerContentView.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+        centerContentView.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
+        centerContentView.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
+        addArrangedSubview(centerContentView)
 
         inputTextField = UITextField()
         inputTextField.autocapitalizationType = .none
@@ -246,15 +260,15 @@ open class AmountInputField: UIStackView {
         inputTextField.setContentHuggingPriority(.defaultHigh, for: .horizontal)
         inputTextField.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
         inputTextField.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
-        contentView.addSubview(inputTextField)
+        centerContentView.addSubview(inputTextField)
 
-        topConstraint = inputTextField.topAnchor.constraint(equalTo: contentView.topAnchor)
-        bottomConstraint = inputTextField.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        topConstraint = inputTextField.topAnchor.constraint(equalTo: centerContentView.topAnchor)
+        bottomConstraint = inputTextField.bottomAnchor.constraint(equalTo: centerContentView.bottomAnchor)
         NSLayoutConstraint.activate([
             topConstraint,
             bottomConstraint,
-            inputTextField.rightAnchor.constraint(equalTo: contentView.rightAnchor),
-            inputTextField.leftAnchor.constraint(equalTo: contentView.leftAnchor),
+            inputTextField.rightAnchor.constraint(equalTo: centerContentView.rightAnchor),
+            inputTextField.leftAnchor.constraint(equalTo: centerContentView.leftAnchor),
         ])
 
         centerPlaceholderLabel = UILabel()
@@ -277,12 +291,12 @@ open class AmountInputField: UIStackView {
         stackView.axis = .horizontal
         stackView.alignment = .fill
         stackView.distribution = .fillEqually
-        contentView.addSubview(stackView)
+        centerContentView.addSubview(stackView)
 
         NSLayoutConstraint.activate([
-            stackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
-            stackView.leftAnchor.constraint(equalTo: contentView.leftAnchor),
-            stackView.rightAnchor.constraint(equalTo: contentView.rightAnchor),
+            stackView.topAnchor.constraint(equalTo: centerContentView.topAnchor, constant: 8),
+            stackView.leftAnchor.constraint(equalTo: centerContentView.leftAnchor),
+            stackView.rightAnchor.constraint(equalTo: centerContentView.rightAnchor),
             stackView.heightAnchor.constraint(equalToConstant: 16)
         ])
 
@@ -292,6 +306,19 @@ open class AmountInputField: UIStackView {
         topPlaceholderLabel.text = placeholderText
         topPlaceholderLabel.textAlignment = .left
         stackView.addArrangedSubview(topPlaceholderLabel)
+
+        rightContentView = UIStackView()
+        rightContentView.translatesAutoresizingMaskIntoConstraints = false
+        rightContentView.isHidden = true
+        rightContentView.axis = .vertical
+        rightContentView.alignment = .trailing
+        rightContentView.distribution = .fill
+        addArrangedSubview(rightContentView)
+
+        NSLayoutConstraint.activate([
+            rightContentView.heightAnchor.constraint(equalTo: centerContentView.heightAnchor),
+            rightContentView.widthAnchor.constraint(equalTo: centerContentView.heightAnchor, multiplier: 1.0)
+        ])
 
         isActive = false
     }
