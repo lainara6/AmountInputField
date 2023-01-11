@@ -241,7 +241,7 @@ open class AmountInputField: UIStackView {
         backgroundColor = inputBackgroundColor
 
         contentView = UIView()
-        contentView.layer.borderWidth = 1
+        contentView.layer.borderWidth = 0
         contentView.layer.borderColor = UIColor.green.cgColor
         contentView.setContentHuggingPriority(.defaultLow, for: .vertical)
         contentView.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -313,7 +313,7 @@ open class AmountInputField: UIStackView {
         rightContentView.axis = .vertical
         rightContentView.alignment = .trailing
         rightContentView.distribution = .fill
-        rightContentView.layer.borderWidth = 1
+        rightContentView.layer.borderWidth = 0
         rightContentView.layer.borderColor = UIColor.red.cgColor
         addArrangedSubview(rightContentView)
 
