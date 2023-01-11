@@ -411,7 +411,7 @@ extension AmountInputField: UITextFieldDelegate {
 
     private func validateInput(text: String) -> Bool {
         do {
-            let regex = try NSRegularExpression(pattern: "^0*[0-9]*[0-9,]*.?[0-9]{0,2}$", options: [])
+            let regex = try NSRegularExpression(pattern: "^([0-9],*){0,17}\\.?[0-9]{0,2}$", options: [])
             let matches = regex.numberOfMatches(in: text, options: [], range: NSRange(location: 0, length: text.unicodeScalars.count))
             return matches > 0
         } catch {
